@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>維修回訪報告（手動版）</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="report-page">
+  <header class="header">
+    <img src="/assets/12731758007267_.pic_hd.jpg" alt="MAQUA 服務小回顧" class="banner">
+  </header>
+
+  <main class="container">
+    <section class="service-feedback-section">
+      <h1 class="main-title">服務小回顧</h1>
+      <p class="description">今天已經幫您完成這次的保養維護，設備狀態一切良好，<br>請安心使用～</p>
+      <p class="description">感謝一直以來讓我們陪伴在您身邊！</p>
+    </section>
+
+    <div class="service-dates-section">
+      <div class="date-buttons">
+        <div class="date-button current-service">
+          <div class="date-label">本次服務</div>
+          <div class="date-value" id="serviceDateValue">—</div>
+        </div>
+        <div class="date-button next-service">
+          <div class="date-label">下次服務</div>
+          <div class="date-value" id="nextDateValue">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="slidesContainer" class="slides-wrapper"></div>
+
+    <div class="maintenance-info">
+      <div class="feedback-container">
+        <p class="feedback-text">我們會不斷優化服務，懇請你向我們大膽評價！</p>
+        <a class="feedback-button" href="https://docs.google.com/forms/d/e/1FAIpQLScMmKwrMvHjSqXLYyQ5U0H35kjIdVmjrrGnFCLdl6i7aP097Q/viewform?pli=1" target="_blank" rel="noopener">點此按鈕進行評價</a>
+      </div>
+
+      <div class="reminder-section">
+        <button class="reminder-btn">使用情況小教學</button>
+      </div>
+
+      <div class="video-thumbnails">
+        <div class="video-item" onclick="showVideoOverlay('/assets/1252_1757912418.mp4')">
+          <div class="video-thumbnail" style="background-image: url('/assets/13221758271666_.pic_hd.jpg');"></div>
+        </div>
+        <div class="video-item" onclick="showVideoOverlay('/assets/1253_1757912439.mp4')">
+          <div class="video-thumbnail" style="background-image: url('/assets/13201758270327_.pic_hd.jpg');"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="uploaded-design-image">
+      <img src="/assets/13191758269431_.pic_hd.jpg" alt="完整設計圖" style="width: 100%; height: auto; display: block;">
+    </div>
+  </main>
+
+  <div id="videoOverlay" onclick="hideVideoOverlay(event)" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;">
+    <video id="overlayVideo" controls playsinline style="max-width: 90%; max-height: 90%;"></video>
+  </div>
+
+  <div id="imageOverlay" onclick="hideOverlay()">
+    <img id="overlayImg" src="" alt="放大圖片">
+  </div>
+
+  <script>
+    function getQueryParam(name) {
+      const params = new URLSearchParams(window.location.search);
+      return params.get(name);
+    }
+
+    const slidesContainer = document.getElementById('slidesContainer');
+    const serviceDateEl = document.getElementById('serviceDateValue');
+    const nextDateEl = document.getElementById('nextDateValue');
+
+    function appendImages(list) {
+      list.forEach(item => {
+        const slide = document.createElement('div');
+        slide.classList.add('slide');
+
+        const img = document.createElement('img');
+        if (/^https?:\/\//i.test(item)) {
+          img.src = item;
+        } else {
+          const hasExt = /\.(jpg|jpeg|png|gif|webp)$/i.test(item);
+          const idWithExt = hasExt ? item : `${item}.jpg`;
+          img.src = `https://res.cloudinary.com/djw2gafqe/image/upload/${idWithExt}`;
+        }
+        img.loading = 'lazy';
+        img.alt = '保養照片';
+        img.addEventListener('click', () => showOverlay(img.src));
+
+        slide.appendChild(img);
+        slidesContainer.appendChild(slide);
+      });
+    }
+
+    function showOverlay(src) {
+      const overlay = document.getElementById('imageOverlay');
+      const overlayImg = document.getElementById('overlayImg');
+      overlayImg.src = src;
+      overlay.style.display = 'flex';
+    }
+
+    function hideOverlay() {
+      const overlay = document.getElementById('imageOverlay');
+      overlay.style.display = 'none';
+    }
+
+    function showVideoOverlay(src) {
+      const overlay = document.getElementById('videoOverlay');
+      const videoEl = document.getElementById('overlayVideo');
+      if (!videoEl) return;
+      videoEl.src = src;
+      overlay.style.display = 'flex';
+      setTimeout(() => {
+        try { videoEl.play(); } catch (e) {}
+      }, 0);
+    }
+
+    function hideVideoOverlay(event) {
+      if (event && event.target && event.target.id === 'overlayVideo') return;
+      const overlay = document.getElementById('videoOverlay');
+      const videoEl = document.getElementById('overlayVideo');
+      if (videoEl) {
+        try { videoEl.pause(); } catch (e) {}
+        videoEl.removeAttribute('src');
+      }
+      overlay.style.display = 'none';
+    }
+
+    function applyDates() {
+      const serviceDate = getQueryParam('serviceDate');
+      const nextServiceDate = getQueryParam('nextServiceDate');
+      if (serviceDate) serviceDateEl.textContent = serviceDate;
+      if (nextServiceDate) nextDateEl.textContent = nextServiceDate;
+    }
+
+    function loadImagesFromParams() {
+      const urlsParam = getQueryParam('urls');
+      const idsParam = getQueryParam('ids');
+
+      const list = [];
+      if (urlsParam) {
+        try {
+          const decoded = decodeURIComponent(urlsParam);
+          decoded.split(',').map(item => item.trim()).filter(Boolean).forEach(item => list.push(item));
+        } catch (error) {
+          console.warn('解析 urls 參數失敗', error);
+        }
+      }
+
+      if (!list.length && idsParam) {
+        idsParam.split(',').map(item => item.trim()).filter(Boolean).forEach(item => list.push(item));
+      }
+
+      if (!list.length) {
+        slidesContainer.innerHTML = '<p>請在網址參數提供圖片網址或 public_id。</p>';
+        return;
+      }
+
+      appendImages(list);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      applyDates();
+      loadImagesFromParams();
+    });
+  </script>
+</body>
+</html>
